@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Verity — Unit Tests for AI Reasoning</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #f5f3ee;
+      --bg2: #edeae3;
+      --bg3: #e3e0d8;
+      --ink: #1a1915;
+      --ink2: #5a574f;
+      --ink3: #9a978f;
+      --red: #c0392b;
+      --red-bg: #fdf0ee;
+      --green: #1d6e3f;
+      --green-bg: #edf7f1;
+      --amber: #8a5c00;
+      --border: rgba(26,25,21,0.1);
+      --border2: rgba(26,25,21,0.18);
+      --mono: 'DM Mono', monospace;
+      --sans: 'DM Sans', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--ink); font-family: var(--sans); line-height: 1.6; overflow-x: hidden; }
+
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.1rem 2.5rem;
+      background: rgba(245,243,238,0.93);
+      backdrop-filter: blur(14px);
+      border-bottom: 0.5px solid var(--border);
+    }
+    .nav-logo { font-family: var(--mono); font-size: 16px; font-weight: 500; color: var(--ink); text-decoration: none; letter-spacing: -0.3px; }
+    .nav-logo span { color: var(--ink3); font-weight: 300; }
+    .nav-cta { font-family: var(--mono); font-size: 12px; padding: 7px 18px; background: var(--ink); color: var(--bg); border-radius: 5px; text-decoration: none; transition: opacity 0.15s; }
+    .nav-cta:hover { opacity: 0.78; }
+
+    .hero { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; padding: 9rem 2.5rem 5rem; max-width: 920px; margin: 0 auto; }
+    .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--ink3); margin-bottom: 1.5rem; opacity: 0; animation: up 0.7s ease forwards; }
+    .hero-title { font-family: var(--mono); font-size: clamp(38px,6.5vw,76px); font-weight: 500; line-height: 1.08; letter-spacing: -2.5px; color: var(--ink); margin-bottom: 1.5rem; opacity: 0; animation: up 0.7s ease 0.1s forwards; }
+    .hero-title em { font-style: italic; font-weight: 300; color: var(--ink2); }
+    .hero-sub { font-size: 19px; font-weight: 300; color: var(--ink2); max-width: 580px; line-height: 1.75; margin-bottom: 2.5rem; opacity: 0; animation: up 0.7s ease 0.2s forwards; }
+    .hero-btns { display: flex; gap: 14px; align-items: center; opacity: 0; animation: up 0.7s ease 0.3s forwards; }
+    .btn-primary { font-family: var(--mono); font-size: 13px; padding: 13px 26px; background: var(--ink); color: var(--bg); border-radius: 6px; text-decoration: none; transition: opacity 0.15s; }
+    .btn-primary:hover { opacity: 0.78; }
+    .btn-ghost { font-family: var(--mono); font-size: 13px; color: var(--ink2); text-decoration: none; border-bottom: 0.5px solid var(--border2); padding-bottom: 1px; transition: color 0.15s; }
+    .btn-ghost:hover { color: var(--ink); }
+    @keyframes up { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
+
+    .section { padding: 6rem 2.5rem; max-width: 920px; margin: 0 auto; }
+    .label { font-family: var(--mono); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--ink3); margin-bottom: 1.75rem; }
+    .section-title { font-family: var(--mono); font-size: clamp(26px,3.8vw,44px); font-weight: 500; letter-spacing: -1.2px; line-height: 1.18; margin-bottom: 1.25rem; }
+    .section-body { font-size: 16px; font-weight: 300; color: var(--ink2); max-width: 580px; line-height: 1.8; }
+    hr.div { border: none; border-top: 0.5px solid var(--border); margin: 0 2.5rem; }
+
+    .demo-box { background: var(--bg2); border: 0.5px solid var(--border2); border-radius: 14px; padding: 2rem; margin-top: 3rem; }
+    .demo-label { font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink3); margin-bottom: 1.5rem; }
+    .qa-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    @media(max-width:580px) { .qa-grid { grid-template-columns: 1fr; } }
+    .qa { background: var(--bg); border: 0.5px solid var(--border); border-radius: 8px; padding: 1rem 1.1rem; }
+    .qa.flagged { border-left: 2px solid var(--red); }
+    .qa-q { font-family: var(--mono); font-size: 11px; color: var(--ink3); margin-bottom: 6px; }
+    .qa-prompt { font-family: var(--mono); font-size: 13px; color: var(--ink); margin-bottom: 8px; line-height: 1.5; }
+    .qa-answer { font-size: 13px; font-weight: 300; color: var(--ink2); line-height: 1.55; margin-bottom: 8px; }
+    .qa-verdict { font-family: var(--mono); font-size: 11px; font-weight: 500; }
+    .verdict-pass { color: var(--green); }
+    .verdict-fail { color: var(--red); }
+    .issue-bar { border-left: 2px solid var(--red); background: var(--red-bg); border-radius: 0 8px 8px 0; padding: 10px 14px; margin-top: 10px; font-family: var(--mono); font-size: 12px; color: var(--red); line-height: 1.6; }
+    .score-pill { display: inline-flex; align-items: center; gap: 7px; background: var(--red-bg); border: 0.5px solid rgba(192,57,43,0.2); border-radius: 20px; padding: 5px 14px 5px 10px; font-family: var(--mono); font-size: 12px; color: var(--red); margin-top: 1.1rem; }
+    .score-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--red); }
+
+    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px,1fr)); gap: 1px; background: var(--border); border: 0.5px solid var(--border); border-radius: 12px; overflow: hidden; margin-top: 3rem; }
+    .step { background: var(--bg); padding: 1.75rem 1.5rem; }
+    .step-n { font-family: var(--mono); font-size: 11px; color: var(--ink3); margin-bottom: 0.75rem; }
+    .step-t { font-family: var(--mono); font-size: 14px; font-weight: 500; color: var(--ink); margin-bottom: 0.4rem; letter-spacing: -0.3px; }
+    .step-d { font-size: 13px; font-weight: 300; color: var(--ink2); line-height: 1.6; }
+
+    .code { background: var(--ink); border-radius: 10px; padding: 1.75rem 2rem; margin-top: 3rem; font-family: var(--mono); font-size: 13px; line-height: 1.9; overflow-x: auto; }
+    .c-comment { color: #55524a; }
+    .c-key { color: #9a978f; }
+    .c-str { color: #e8e2d4; }
+    .c-red { color: #e07070; }
+    .c-green { color: #6dbf8a; }
+    .c-amber { color: #d4a85a; }
+    .c-br { color: #6a6760; }
+
+    .use-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 10px; margin-top: 3rem; }
+    .use { background: var(--bg2); border: 0.5px solid var(--border); border-radius: 10px; padding: 1.5rem; transition: border-color 0.15s; }
+    .use:hover { border-color: var(--border2); }
+    .use-tag { font-family: var(--mono); font-size: 10px; color: var(--ink3); margin-bottom: 0.6rem; letter-spacing: 0.5px; }
+    .use-t { font-family: var(--mono); font-size: 14px; font-weight: 500; color: var(--ink); margin-bottom: 0.4rem; }
+    .use-d { font-size: 13px; font-weight: 300; color: var(--ink2); line-height: 1.6; }
+
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 10px; margin-top: 3rem; }
+    .stat { background: var(--bg2); border: 0.5px solid var(--border); border-radius: 10px; padding: 1.5rem; }
+    .stat-num { font-family: var(--mono); font-size: 32px; font-weight: 500; color: var(--ink); letter-spacing: -1.5px; margin-bottom: 4px; }
+    .stat-label { font-size: 13px; font-weight: 300; color: var(--ink2); line-height: 1.5; }
+
+    .demo-section { background: var(--ink); border-radius: 16px; margin: 0 2.5rem; padding: 4rem 2.5rem; display: flex; flex-direction: column; align-items: center; text-align: center; }
+    .demo-section-label { font-family: var(--mono); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #55524a; margin-bottom: 1.25rem; }
+    .demo-section-title { font-family: var(--mono); font-size: clamp(24px,3.5vw,40px); font-weight: 500; letter-spacing: -1px; color: #f0ede6; margin-bottom: 1rem; line-height: 1.2; }
+    .demo-section-sub { font-size: 15px; font-weight: 300; color: #9a978f; margin-bottom: 2rem; max-width: 480px; line-height: 1.7; }
+    .btn-demo { font-family: var(--mono); font-size: 14px; font-weight: 500; padding: 14px 32px; background: #f0ede6; color: var(--ink); border-radius: 7px; text-decoration: none; transition: opacity 0.15s; letter-spacing: -0.3px; }
+    .btn-demo:hover { opacity: 0.85; }
+    .demo-note { font-family: var(--mono); font-size: 11px; color: #55524a; margin-top: 1rem; }
+
+    .cta { padding: 7rem 2.5rem; max-width: 920px; margin: 0 auto; text-align: center; }
+    .cta-title { font-family: var(--mono); font-size: clamp(28px,4.5vw,56px); font-weight: 500; letter-spacing: -1.5px; line-height: 1.12; margin-bottom: 1.25rem; }
+    .cta-sub { font-size: 16px; font-weight: 300; color: var(--ink2); margin-bottom: 2.5rem; line-height: 1.7; }
+
+    footer { border-top: 0.5px solid var(--border); padding: 2rem 2.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+    .footer-logo { font-family: var(--mono); font-size: 14px; color: var(--ink3); }
+    .footer-note { font-family: var(--mono); font-size: 11px; color: var(--ink3); }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="#" class="nav-logo">verity<span>.test</span></a>
+  <a href="https://verity-demo-ten.vercel.app/" class="nav-cta" target="_blank">▶ try demo</a>
+</nav>
+
+<section class="hero">
+  <div class="eyebrow">AI reliability testing</div>
+  <h1 class="hero-title">Unit tests<br/>for <em>AI reasoning.</em></h1>
+  <p class="hero-sub">LLMs give contradictory answers to the same question depending on how you ask. Verity catches this automatically — before it reaches your users.</p>
+  <div class="hero-btns">
+    <a href="https://verity-demo-ten.vercel.app/" class="btn-primary" target="_blank">▶ run a stability test</a>
+    <a href="#problem" class="btn-ghost">see the problem →</a>
+  </div>
+</section>
+
+<hr class="div"/>
+
+<section class="section" id="problem">
+  <div class="label">the problem</div>
+  <h2 class="section-title">Your AI gives different answers<br/>to the same question.</h2>
+  <p class="section-body">Developers test whether AI gives correct answers. Nobody tests whether it gives consistent ones. Small changes in wording can flip a conclusion entirely — invisible in development, dangerous in production.</p>
+
+  <div class="demo-box">
+    <div class="demo-label">live example — same question, contradictory answers</div>
+    <div class="qa-grid">
+      <div class="qa">
+        <div class="qa-q">prompt #0 — baseline</div>
+        <div class="qa-prompt">"Is web scraping legal?"</div>
+        <div class="qa-answer">→ "Yes, scraping publicly available data is generally permitted under US law."</div>
+        <div class="qa-verdict verdict-pass">● pass</div>
+      </div>
+      <div class="qa flagged">
+        <div class="qa-q">prompt #3 — adversarial variation</div>
+        <div class="qa-prompt">"Could scraping websites violate the law?"</div>
+        <div class="qa-answer">→ "Yes, web scraping can be illegal and may violate the CFAA."</div>
+        <div class="qa-verdict verdict-fail">● conclusion flip</div>
+      </div>
+    </div>
+    <div class="issue-bar"><strong>CONCLUSION_FLIP detected</strong> — prompt #3 reaches the opposite conclusion to baseline. A legal copilot running this model gives contradictory advice depending on how the user phrases their question.</div>
+    <div class="score-pill"><span class="score-dot"></span>stability score: 42% — FAIL</div>
+  </div>
+</section>
+
+<hr class="div"/>
+
+<section class="section">
+  <div class="label">why this matters now</div>
+  <h2 class="section-title">AI is being shipped into<br/>decisions that matter.</h2>
+  <p class="section-body">Legal copilots. Medical assistants. Financial advisors. Customer support. These products cannot afford contradictions. One flip in reasoning is a liability, a misdiagnosis, bad financial advice.</p>
+
+  <div class="stat-grid">
+    <div class="stat">
+      <div class="stat-num">4M+</div>
+      <div class="stat-label">developers actively building LLM-powered applications today</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">50k+</div>
+      <div class="stat-label">companies shipping AI copilots into production right now</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">0</div>
+      <div class="stat-label">widely adopted tools for testing reasoning consistency — until now</div>
+    </div>
+  </div>
+</section>
+
+<hr class="div"/>
+
+<section class="section" id="how">
+  <div class="label">how it works</div>
+  <h2 class="section-title">Stress-test your prompts<br/>in four steps.</h2>
+  <p class="section-body">No test cases to write. No configuration. Paste a prompt and Verity does the rest.</p>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-n">01</div>
+      <div class="step-t">submit a prompt</div>
+      <div class="step-d">Paste any prompt your AI uses — a legal question, medical query, financial decision.</div>
+    </div>
+    <div class="step">
+      <div class="step-n">02</div>
+      <div class="step-t">generate variations</div>
+      <div class="step-d">Verity automatically generates semantic variations — neutral rephrasing, adversarial framing, different angles.</div>
+    </div>
+    <div class="step">
+      <div class="step-n">03</div>
+      <div class="step-t">run the model</div>
+      <div class="step-d">Every variation runs through your model independently. Results come back in seconds.</div>
+    </div>
+    <div class="step">
+      <div class="step-n">04</div>
+      <div class="step-t">get a report</div>
+      <div class="step-d">Conclusion flips, reasoning contradictions, and adversarial failures are flagged with a stability score.</div>
+    </div>
+  </div>
+
+  <div class="code">
+    <span class="c-comment">// example verity output</span><br/><br/>
+    <span class="c-br">{</span><br/>
+    &nbsp;&nbsp;<span class="c-key">"prompt"</span>: <span class="c-str">"Is web scraping legal?"</span>,<br/>
+    &nbsp;&nbsp;<span class="c-key">"stability_score"</span>: <span class="c-red">42</span>,<br/>
+    &nbsp;&nbsp;<span class="c-key">"verdict"</span>: <span class="c-red">"FAIL"</span>,<br/>
+    &nbsp;&nbsp;<span class="c-key">"issues"</span>: <span class="c-br">[{</span><br/>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="c-key">"type"</span>: <span class="c-amber">"CONCLUSION_FLIP"</span>,<br/>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="c-key">"severity"</span>: <span class="c-red">"high"</span>,<br/>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="c-key">"description"</span>: <span class="c-str">"Prompt #3 reaches opposite conclusion to baseline."</span><br/>
+    &nbsp;&nbsp;<span class="c-br">}]</span>,<br/>
+    &nbsp;&nbsp;<span class="c-key">"variations_tested"</span>: <span class="c-green">5</span>,<br/>
+    &nbsp;&nbsp;<span class="c-key">"variations_passed"</span>: <span class="c-green">2</span><br/>
+    <span class="c-br">}</span>
+  </div>
+</section>
+
+<hr class="div"/>
+
+<section class="section">
+  <div class="label">who needs this</div>
+  <h2 class="section-title">Every team shipping AI<br/>into high-stakes domains.</h2>
+  <p class="section-body">Reasoning instability is most dangerous where the answers matter most.</p>
+
+  <div class="use-grid">
+    <div class="use">
+      <div class="use-tag">01 — legal</div>
+      <div class="use-t">Legal copilots</div>
+      <div class="use-d">A legal AI that gives contradictory guidance depending on phrasing is a liability, not a product.</div>
+    </div>
+    <div class="use">
+      <div class="use-tag">02 — medical</div>
+      <div class="use-t">Medical assistants</div>
+      <div class="use-d">Inconsistent medical recommendations based on wording variations put patients at risk.</div>
+    </div>
+    <div class="use">
+      <div class="use-tag">03 — financial</div>
+      <div class="use-t">Financial advisors</div>
+      <div class="use-d">An AI that recommends buying and selling the same asset depending on how you ask is not ready to ship.</div>
+    </div>
+    <div class="use">
+      <div class="use-tag">04 — enterprise</div>
+      <div class="use-t">Enterprise copilots</div>
+      <div class="use-d">Any company deploying AI to customers needs consistent answers at scale.</div>
+    </div>
+  </div>
+</section>
+
+<hr class="div"/>
+
+<div style="padding: 6rem 0;">
+  <div class="demo-section">
+    <div class="demo-section-label">interactive demo</div>
+    <h2 class="demo-section-title">See it fail.<br/>Then fix it.</h2>
+    <p class="demo-section-sub">Run the web scraping example. Watch a trusted model contradict itself. That's what your users are experiencing right now.</p>
+    <a href="https://verity-demo-ten.vercel.app/" class="btn-demo" target="_blank">▶ run stability test</a>
+    <div class="demo-note">no signup required — results in ~30 seconds</div>
+  </div>
+</div>
+
+<section class="cta">
+  <h2 class="cta-title">Test your AI's reasoning<br/>before your users do.</h2>
+  <p class="cta-sub">Verity is the testing layer every AI product needs.<br/>Start free. Integrate in minutes.</p>
+  <a href="https://verity-demo-ten.vercel.app/" class="btn-primary" target="_blank" style="font-size:14px; padding:14px 32px;">▶ run a stability test</a>
+</section>
+
+<footer>
+  <div class="footer-logo">verity.test</div>
+  <div class="footer-note">built by michele joseph · 2025</div>
+</footer>
+
+</body>
+</html>
